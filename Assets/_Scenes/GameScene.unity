@@ -903,7 +903,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &695553515
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1788,7 +1788,7 @@ GameObject:
   - component: {fileID: 1719119437}
   m_Layer: 0
   m_Name: Hex Grid
-  m_TagString: Untagged
+  m_TagString: GameBoard
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1806,9 +1806,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   width: 7
   height: 13
+  numberLinesToFill: 6
   defaultColor: {r: 1, g: 1, b: 1, a: 1}
   cellPrefab: {fileID: 11422220, guid: 94c2312396697489abc866a188f80152, type: 2}
   cellLabelPrefab: {fileID: 11470134, guid: f68794ca03b6f4510b9a5bd6ee9ba2f4, type: 2}
+  bubblePrefab: {fileID: 100002, guid: e88162a35671ed0428d897b6735d704f, type: 2}
 --- !u!4 &1719119438
 Transform:
   m_ObjectHideFlags: 0
@@ -2339,12 +2341,12 @@ GameObject:
   - component: {fileID: 2117719799}
   - component: {fileID: 2117719800}
   m_Layer: 0
-  m_Name: ScriptObject
+  m_Name: GameHandler
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &2117719799
 Transform:
   m_ObjectHideFlags: 0
@@ -2352,8 +2354,8 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 2117719798}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.25, y: -5, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -4.25, y: -4.25, z: 0}
+  m_LocalScale: {x: 0.05, y: 0.05, z: 0.05}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 6
@@ -2371,4 +2373,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ScoreText: {fileID: 105849567}
   Explosion: {fileID: 100000, guid: 492ba3c8e9e89e74586ffd8b6c4d3be9, type: 2}
-  BubbleParameter: {fileID: 100002, guid: e88162a35671ed0428d897b6735d704f, type: 2}
+  BubblePrefab: {fileID: 100002, guid: e88162a35671ed0428d897b6735d704f, type: 2}
+  NumberOfBubblesToLaunch: 4
+  MinBubblesToRemove: 3

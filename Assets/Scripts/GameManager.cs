@@ -8,61 +8,60 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-
     public Text ScoreText;
     public GameObject Explosion;
+    public GameObject BubblePrefab;
 
-    Bubble[,] BubblesArray = new Bubble[BubbleColumns, BubbleRows];
-    const int BubbleColumns = 8;
-    const int BubbleRows = 13;
-    public GameObject BubbleParameter;
-
-    List<Bubble> SelectedBubbles = new List<Bubble>();
-    private Material selectedBubbleColor;
-
-    int score = 0;
-
-    private bool AreBubblesSelected = false;
+    List<Bubble> BubblesToLaunch = new List<Bubble>();
+    //List<Bubble> BubblesToRemove = new List<Bubble>();
+    
     private bool IsGameOver = false;
-    private const int minBubblesToRemove = 2;
+    private int CurrentScore = 0;
+
+    [Header("Bubbles Attributes")]
+    [Tooltip("The number of bubbles the player can preview before launching them")]
+    [SerializeField, Range(1, 10)]
+    private int NumberOfBubblesToLaunch = 4;
+    [Tooltip("The minimum number of bubbles the player need to match to remove them")]
+    [SerializeField, Range(1, 10)]
+    private int MinBubblesToRemove = 2;
+
+    private HexGrid GameBoard;
 
     // Use this for initialization
     void Start()
     {
-        //this is to be used as the color that the selected Bubbles will have
-        selectedBubbleColor = Resources.Load("Materials/whiteMaterial") as Material;
-        AreBubblesSelected = false;
         IsGameOver = false;
+        GameBoard = GameObject.FindGameObjectWithTag("GameBoard").GetComponent<HexGrid>();
 
-        InitializeBubbles();
+        InitializeBubblesToLaunch();
     }
 
     /// <summary>
-    /// initializes the bubbles
+    /// initializes the bubbles the player can use
     /// </summary>
-    private void InitializeBubbles()
+    private void InitializeBubblesToLaunch()
     {
-        for (int column = 0; column < BubbleColumns; column++)
+        for (int numberOfBubbles = 0; numberOfBubbles < NumberOfBubblesToLaunch; ++numberOfBubbles)
         {
-            for (int row = 0; row < BubbleRows; row++)
-            {
-                MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
-                                                                      //create a new bubble
-                var go = (GameObject)Instantiate(BubbleParameter,
-                    new Vector3((float)column * BubbleParameter.transform.localScale.x + BubbleParameter.transform.localPosition.x,
-                        (float)row * BubbleParameter.transform.localScale.y + BubbleParameter.transform.localPosition.y, 0f), Quaternion.identity);
-                go.tag = material.ColorName;
-                BubblesArray[column, row] = new Bubble(go, material);
-                go.name = column.ToString() + "-" + row.ToString();
-
-                var renderer = go.transform.GetComponent<Renderer>();
-                renderer.material = material; //set the color
-
-
-            }
+            AddBubbleToLaunch(numberOfBubbles);
         }
     }
+    
+    void AddBubbleToLaunch(int numberOfPreviousBubbles)
+    {
+        MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
+                                                              //create a new bubble
+        var go = (GameObject)Instantiate(BubblePrefab,
+            new Vector3(this.transform.localPosition.x,
+            (float)numberOfPreviousBubbles * BubblePrefab.transform.localScale.y + BubblePrefab.transform.localPosition.y, 0f), Quaternion.identity);
+        go.tag = material.ColorName;
+        go.transform.SetParent(this.transform, false);
+        BubblesToLaunch.Add(new Bubble(go, material));
 
+        var renderer = go.transform.GetComponent<Renderer>();
+        renderer.material = material; //set the color
+    }
 
     RaycastHit hit;
     // Update is called once per frame
@@ -73,68 +72,27 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetButtonDown("Fire1"))
         {
-            Ray ray1 = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray1, out hit, Mathf.Infinity))
+            Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (Physics.Raycast(inputRay, out hit))
             {
-                GameObject selectedBubbleGO = hit.transform.gameObject;
-
-
-                int column = int.Parse(selectedBubbleGO.name.Split('-')[0]);
-                int row = int.Parse(selectedBubbleGO.name.Split('-')[1]);
-
-                Bubble selectedBubble = BubblesArray[column, row];
-
-                if (!AreBubblesSelected)//user selects a Bubble
+                Vector3 position = GameBoard.transform.InverseTransformPoint(hit.point);
+                HexCoordinates coordinates = HexCoordinates.FromPosition(position);
+                if (GameBoard.HasCellBubble(coordinates.X, coordinates.Y) == false)
                 {
-                    if (selectedBubble != null)
+                    GameBoard.AddBubbleToCoordinates(coordinates.X, coordinates.Y);
+                    var clusterBubbles = GameBoard.GetClusterFromCoordinates(coordinates.X, coordinates.Y);
+
+                    if (clusterBubbles != null &&
+                        clusterBubbles.Count >= MinBubblesToRemove)
                     {
-                        SelectedBubbles = new List<Bubble>();
-                        MarkBubbles(selectedBubble, column, row, selectedBubble.GameObject.tag);
-                        if (SelectedBubbles.Count < minBubblesToRemove) //not enough selected Bubbles
+                        foreach (var bubbleCoordinates in clusterBubbles)
                         {
-                            //reset the selected
-                            foreach (Bubble el in SelectedBubbles)
-                                el.GameObject.transform.GetComponent<Renderer>().material = el.OriginalBubbleMaterial;
-
-                            return;
-                        }
-                        AreBubblesSelected = true;
-                    }
-                }
-                else if (AreBubblesSelected) //Bubbles are already selected
-                {
-                    if (SelectedBubbles.Contains(selectedBubble) && SelectedBubbles.Count >= minBubblesToRemove)//let's disappear them!
-                    {
-                        score += SelectedBubbles.Count;
-
-                        ScoreText.text = "Score " + score;
-
-                        foreach (Bubble el in SelectedBubbles)
-                        {
-                            int column2 = int.Parse(el.GameObject.name.Split('-')[0]);
-                            int row2 = int.Parse(el.GameObject.name.Split('-')[1]);
-                            //create the explosion
-                            GameObject explosion = Instantiate(Explosion,
-                                BubblesArray[column2, row2].GameObject.transform.position, BubblesArray[column2, row2].GameObject.transform.rotation) as GameObject;
-                            Destroy(explosion, 1f);
-                            if (SettingsManager.Sound) Camera.main.GetComponent<AudioSource>().Play();
-                            Destroy(BubblesArray[column2, row2].GameObject);
-                            BubblesArray[column2, row2] = null;
-                        }
-                        //let's deorganize the rest of the Bubbles
-                        ReallocateBubbles();
-
-                    }
-                    else
-                    {
-                        foreach (Bubble el in SelectedBubbles)
-                        {
-                            el.GameObject.GetComponent<Renderer>().material = el.OriginalBubbleMaterial;
+                            GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
                         }
                     }
-                    AreBubblesSelected = false;
                 }
             }
+
             IsGameOver = CheckIsGameOver();
             if (IsGameOver)
                 StartCoroutine(GotoGameOver());
@@ -143,118 +101,29 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GotoGameOver()
     {
-        if (this.score > 0)
+        if (this.CurrentScore > 0)
         {
             ScoreManager sm = new ScoreManager();
-            sm.AddScore(new ScoreEntry() { ScoreInt = this.score, Date = DateTime.Now });
+            sm.AddScore(new ScoreEntry() { ScoreInt = this.CurrentScore, Date = DateTime.Now });
         }
         yield return new WaitForSeconds(2f);
-        Globals.GameScore = score;
+        Globals.GameScore = this.CurrentScore;
         SceneManager.LoadScene("ScoreboardScene");
-    }
-
-    private void MarkBubbles(Bubble Bubble, int column, int row, string colorToCompare)
-    {
-        if (Bubble != null)
-        {
-            if (Bubble.GameObject.tag == colorToCompare)
-            {
-                if (SelectedBubbles.Contains(Bubble)) return; //we're not checking the same Bubble twice, this will incur a stack overflow
-
-                Bubble.GameObject.transform.GetComponent<Renderer>().material = selectedBubbleColor;
-                SelectedBubbles.Add(Bubble);
-
-                //check bottom
-                if (row > 0)
-                    MarkBubbles(BubblesArray[column, row - 1], column, row - 1, colorToCompare);
-                if (column > 0) //check left
-                    MarkBubbles(BubblesArray[column - 1, row], column - 1, row, colorToCompare);
-                if (column < BubbleColumns - 1) //check right
-                    MarkBubbles(BubblesArray[column + 1, row], column + 1, row, colorToCompare);
-                if (row < BubbleRows - 1) //check top
-                    MarkBubbles(BubblesArray[column, row + 1], column, row + 1, colorToCompare);
-            }
-            else
-                return;
-        }
     }
 
     private bool CheckIsGameOver()
     {
-        //if there are any Bubbles selected, there's no point in checking as it's definitely not game over
-        if (AreBubblesSelected) return false;
+        int width = GameBoard.Width;
 
-        for (int column = 0; column <= BubbleColumns - 1; column++)
+        // Check if there are bubbles in the bottom row
+        for (int x = 0; x < width; ++x)
         {
-            for (int row = BubbleRows - 1; row > 0; row--)
+            if (GameBoard.HasCellBubble(x, 0) == true)
             {
-                //we are comparing each Bubble with the ones located below and right from it
-                if (BubblesArray[column, row] == null) continue;
-
-
-                if (BubblesArray[column, row].GameObject.tag == BubblesArray[column, row - 1].GameObject.tag)
-                    return false;
-
-                if (column < BubbleColumns - 1)
-                {
-                    if (BubblesArray[column + 1, row] == null) continue;
-
-                    if (BubblesArray[column, row].GameObject.tag == BubblesArray[column + 1, row].GameObject.tag)
-                        return false;
-                }
+                return true;
             }
         }
 
-        return true;
-
+        return false;
     }
-
-
-
-
-
-    private void ReallocateBubbles()
-    {
-        //first, let's clear the empty spaces in the rows
-        for (int column = 0; column < BubbleColumns; column++)
-            for (int row = BubbleRows - 1; row >= 0; row--)
-            {
-                //
-                for (int l = 0; l <= row - 1; l++)
-                {
-                    if (BubblesArray[column, l] == null && BubblesArray[column, l + 1] != null)
-                    {
-                        BubblesArray[column, l] = BubblesArray[column, l + 1];
-                        BubblesArray[column, l + 1] = null;
-                        BubblesArray[column, l].GameObject.name = column.ToString() + "-" + l.ToString();
-                    }
-                }
-
-            }
-
-        //now, we'll check for empty columns
-        for (int column = BubbleColumns - 1; column >= 0; column--)
-        {
-            for (int l = 1; l <= column; l++)
-            {
-                //we'll check the bottom element
-                //if it's null, then the whole row is null
-                if (BubblesArray[l, 0] == null && BubblesArray[l - 1, 0] != null)
-                {
-                    //copy entire column...
-                    for (int k = 0; k < BubbleRows; k++)
-                    {
-                        if (BubblesArray[l - 1, k] == null) continue;
-                        BubblesArray[l, k] = BubblesArray[l - 1, k];
-                        BubblesArray[l - 1, k] = null;
-                        BubblesArray[l, k].GameObject.transform.position += new Vector3(BubbleParameter.transform.localScale.x, 0f, 0f);
-                        BubblesArray[l, k].GameObject.name = l.ToString() + "-" + k.ToString();
-                    }
-                }
-            }
-        }
-    }
-
-
-
 }
