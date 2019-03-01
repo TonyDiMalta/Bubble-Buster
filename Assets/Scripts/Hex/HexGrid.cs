@@ -215,7 +215,7 @@ public class HexGrid : MonoBehaviour {
         return neighbors;
     }
 
-    public List<HexCoordinates> GetClusterFromCoordinates(int x, int y)
+    public List<HexCoordinates> GetClusterFromCoordinates(int x, int y, bool shouldIgnoreTag = false)
     {
         if (AreCoordinatesInRange(x, y) == false)
         {
@@ -246,7 +246,8 @@ public class HexGrid : MonoBehaviour {
                 continue;
             }
             
-            if (currentCell.bubble.GameObject.CompareTag(originalTag) == true)
+            if (shouldIgnoreTag == true ||
+                currentCell.bubble.GameObject.CompareTag(originalTag) == true)
             {
                 clusterCells.Add(currentCoordinates);
                 var neighbors = GetBubbleNeighbors(currentCoordinates.X, currentCoordinates.Y);
@@ -262,6 +263,47 @@ public class HexGrid : MonoBehaviour {
         }
         
         return clusterCells;
+    }
+
+    public List<HexCoordinates> GetFloatingClusters()
+    {
+        var floatingClusters = new List<HexCoordinates>();
+        var processedCells = new List<HexCoordinates>();
+
+        foreach (var cell in cells)
+        {
+            HexCoordinates cellCoordinates = cell.coordinates;
+            if (cell.bubble != null &&
+                processedCells.Contains(cellCoordinates) == false)
+            {
+                var clusterRange = GetClusterFromCoordinates(cellCoordinates.X, cellCoordinates.Y, true);
+
+                if (clusterRange == null ||
+                    clusterRange.Count == 0)
+                {
+                    continue;
+                }
+
+                processedCells.AddRange(clusterRange);
+
+                bool isFloatingCluster = true;
+                foreach (var clusterCellCoordinate in clusterRange)
+                {
+                    if (clusterCellCoordinate.Y == height - 1)
+                    {
+                        isFloatingCluster = false;
+                        break;
+                    }
+                }
+
+                if (isFloatingCluster == true)
+                {
+                    floatingClusters.AddRange(clusterRange);
+                }
+            }
+        }
+
+        return floatingClusters;
     }
 
     public void AddNewBubblesRow()

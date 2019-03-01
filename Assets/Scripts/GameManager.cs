@@ -99,7 +99,14 @@ public class GameManager : MonoBehaviour
                             GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
                         }
 
-                        UpdateScore(clusterBubbles.Count);
+                        var floatingClusters = GameBoard.GetFloatingClusters();
+
+                        foreach (var bubbleCoordinates in floatingClusters)
+                        {
+                            GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
+                        }
+
+                        UpdateScore(clusterBubbles.Count + floatingClusters.Count);
                     }
 
                     GameBoard.SetTurnOver();
