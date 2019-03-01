@@ -95,11 +95,9 @@ public class HexGrid : MonoBehaviour {
         }
 	}
 
-	void CreateCell (int x, int y) {
-		Vector3 position;
-		position.x = (x + y * 0.5f - y / 2) * (HexMetrics.innerRadius * 2f);
-		position.y = y * (HexMetrics.outerRadius * 1.5f);
-		position.z = 0f;
+	void CreateCell (int x, int y)
+    {
+		Vector3 position = HexCoordinates.PositionFromOffsetCoordinates(x, y);
 
         HexCell cell = cells[x, y] = Instantiate<HexCell>(cellPrefab);
         cell.name = "Cell[" + x.ToString() + ", " + y.ToString() + "]";
@@ -107,6 +105,7 @@ public class HexGrid : MonoBehaviour {
 		cell.transform.localPosition = position;
 		cell.coordinates = HexCoordinates.FromOffsetCoordinates(x, y);
         cell.color = defaultColor;
+
         if (y >= height - numberLinesToFill)
         {
             CreateBubble(cell);
@@ -125,15 +124,16 @@ public class HexGrid : MonoBehaviour {
 
     void CreateBubble(HexCell cell)
     {
-        MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
-                                                              //create a new bubble
-        var go = (GameObject)Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity);
-        go.transform.SetParent(cell.transform, false);
-        go.tag = material.ColorName;
-        cell.bubble = new Bubble(go, material);
+        GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
+        go.transform.SetParent(cell.transform, false); //attach the bubble to the cell
 
+        MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
         var renderer = go.transform.GetComponent<Renderer>();
         renderer.material = material; //set the color
+        go.tag = material.ColorName;
+        go.name = "Bubble(" + go.tag + ")";
+
+        cell.bubble = new Bubble(go, material); //add the new bubble to the cell
     }
 
     public void AddBubbleToCoordinates(int x, int y)
@@ -318,8 +318,7 @@ public class HexGrid : MonoBehaviour {
                 {
                     var bubbleToMoveTransform = bubbleToMove.GameObject.transform;
                     var currentCellTransform = cells[x, y].transform;
-                    bubbleToMoveTransform.position = currentCellTransform.position;
-                    bubbleToMoveTransform.SetParent(currentCellTransform, true);
+                    bubbleToMoveTransform.SetParent(currentCellTransform, false);
                     cells[x, y].bubble = bubbleToMove;
                     cells[x, y + 1].bubble = null;
                 }
