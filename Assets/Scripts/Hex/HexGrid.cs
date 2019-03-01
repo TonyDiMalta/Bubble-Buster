@@ -1,6 +1,9 @@
 ﻿using Assets.Scripts;
 using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.UI;
 
 public class HexGrid : MonoBehaviour {
@@ -28,6 +31,10 @@ public class HexGrid : MonoBehaviour {
 
     [SerializeField, Range(1, 20)]
     private int numberLinesToFill = 5;
+
+    [SerializeField, Range(1, 10)]
+    private uint turnsCountBeforeEvent = 5;
+    private uint numberOfTurns = 0;
 
     public Color defaultColor = Color.white;
 
@@ -147,20 +154,22 @@ public class HexGrid : MonoBehaviour {
         }
     }
 
-    private bool AreCoordinatesInRange(int x, int y)
+    private bool AreCoordinatesInRange(int x, int y, bool shouldRaiseExceptions = true)
     {
-        if (x >= 0 && x < width &&
-            y >= 0 && y < height)
-        {
-            return true;
-        }
-
-        return false;
+        bool isInRange = 
+            x >= 0 && x < width &&
+            y >= 0 && y < height;
+        Assert.IsFalse(shouldRaiseExceptions == true && isInRange == false, 
+            ObjectNames.GetClassName(this) + "::" + MethodBase.GetCurrentMethod().Name + "(" + 
+            x.ToString() + ", " + y.ToString() + 
+            ") is outside of the range (" + 
+            width.ToString() + ", " + height.ToString() + ")");
+        return isInRange;
     }
 
-    public bool HasCellBubble(int x, int y)
+    public bool HasCellBubble(int x, int y, bool shouldRaiseExceptions = true)
     {
-        if (AreCoordinatesInRange(x, y) == true &&
+        if (AreCoordinatesInRange(x, y, shouldRaiseExceptions) == true &&
             cells[x, y].bubble != null)
         {
             return true;
@@ -171,6 +180,11 @@ public class HexGrid : MonoBehaviour {
 
     private List<HexCell> GetBubbleNeighbors(int x, int y)
     {
+        if (AreCoordinatesInRange(x, y) == false)
+        {
+            return null;
+        }
+
         var neighbors = new List<HexCell>();
 
         if (y % 2 == 0)
@@ -179,7 +193,7 @@ public class HexGrid : MonoBehaviour {
             {
                 int x2 = x + coordinates.X;
                 int y2 = y + coordinates.Y;
-                if (HasCellBubble(x2, y2) == true)
+                if (HasCellBubble(x2, y2, false) == true)
                 {
                     neighbors.Add(cells[x2, y2]);
                 }
@@ -191,7 +205,7 @@ public class HexGrid : MonoBehaviour {
             {
                 int x2 = x + coordinates.X;
                 int y2 = y + coordinates.Y;
-                if (HasCellBubble(x2, y2) == true)
+                if (HasCellBubble(x2, y2, false) == true)
                 {
                     neighbors.Add(cells[x2, y2]);
                 }
@@ -203,6 +217,11 @@ public class HexGrid : MonoBehaviour {
 
     public List<HexCoordinates> GetClusterFromCoordinates(int x, int y)
     {
+        if (AreCoordinatesInRange(x, y) == false)
+        {
+            return null;
+        }
+
         HexCell originalCell = cells[x, y];
 
         if (originalCell.bubble == null)
@@ -243,5 +262,41 @@ public class HexGrid : MonoBehaviour {
         }
         
         return clusterCells;
+    }
+
+    public void AddNewBubblesRow()
+    {
+        for (int y = 0; y < height - 1; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                var bubbleToMove = cells[x, y + 1].bubble;
+
+                if (bubbleToMove != null)
+                {
+                    var bubbleToMoveTransform = bubbleToMove.GameObject.transform;
+                    var currentCellTransform = cells[x, y].transform;
+                    bubbleToMoveTransform.position = currentCellTransform.position;
+                    bubbleToMoveTransform.SetParent(currentCellTransform, true);
+                    cells[x, y].bubble = bubbleToMove;
+                    cells[x, y + 1].bubble = null;
+                }
+            }
+        }
+
+        for (int x = 0; x < width; ++x)
+        {
+            CreateBubble(cells[x, height - 1]);
+        }
+    }
+
+    public void SetTurnOver()
+    {
+        ++numberOfTurns;
+    }
+
+    public bool IsTurnEventCountReached()
+    {
+        return numberOfTurns % turnsCountBeforeEvent == 0;
     }
 }

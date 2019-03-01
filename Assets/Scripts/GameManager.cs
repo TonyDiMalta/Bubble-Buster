@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public Text ScoreText;
+    public Text DisplayedScore;
     public GameObject Explosion;
     public GameObject BubblePrefab;
 
@@ -16,6 +16,10 @@ public class GameManager : MonoBehaviour
     //List<Bubble> BubblesToRemove = new List<Bubble>();
     
     private bool IsGameOver = false;
+    private bool IsGamePaused = false;
+
+    [SerializeField, Range(1, 1000)]
+    private int ScoreMultiplier = 100;
     private int CurrentScore = 0;
 
     [Header("Bubbles Attributes")]
@@ -67,6 +71,11 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (IsGamePaused == true)
+        {
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.Escape))
             SceneManager.LoadScene("MainScene");
 
@@ -89,6 +98,14 @@ public class GameManager : MonoBehaviour
                         {
                             GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
                         }
+
+                        UpdateScore(clusterBubbles.Count);
+                    }
+
+                    GameBoard.SetTurnOver();
+                    if (GameBoard.IsTurnEventCountReached() == true)
+                    {
+                        GameBoard.AddNewBubblesRow();
                     }
                 }
             }
@@ -101,6 +118,7 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator GotoGameOver()
     {
+        IsGamePaused = true;
         if (this.CurrentScore > 0)
         {
             ScoreManager sm = new ScoreManager();
@@ -125,5 +143,15 @@ public class GameManager : MonoBehaviour
         }
 
         return false;
+    }
+    
+    private void UpdateScore(int CountBubblesBursted)
+    {
+        while (CountBubblesBursted > 0)
+        {
+            CurrentScore += CountBubblesBursted * ScoreMultiplier;
+            --CountBubblesBursted;
+        }
+        DisplayedScore.text = CurrentScore.ToString();
     }
 }
