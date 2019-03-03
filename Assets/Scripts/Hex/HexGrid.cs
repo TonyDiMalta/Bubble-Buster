@@ -1,7 +1,6 @@
 ﻿using Assets.Scripts;
 using System.Collections.Generic;
 using System.Reflection;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.UI;
@@ -71,7 +70,20 @@ public class HexGrid : MonoBehaviour {
 		gridCanvas = GetComponentInChildren<Canvas>();
 		hexMesh = GetComponentInChildren<HexMesh>();
 
-		cells = new HexCell[width, height];
+        //Calculate grid position and scale according to the aspect ratio.
+        Vector3 worldPos = Camera.main.ScreenToWorldPoint(-Camera.main.transform.localPosition);
+        Vector3 outerRadius = new Vector3(HexMetrics.outerRadius, HexMetrics.outerRadius, 0f);
+        transform.localScale = transform.localScale * Camera.main.aspect / (200f / 300f);
+        transform.position = worldPos + (Vector3.Scale(outerRadius, transform.localScale));
+
+        //Adapt the grid size to fit the screen.
+        Vector3 maxWorldPos = Camera.main.ViewportToWorldPoint(new Vector3(Camera.main.rect.width - Camera.main.rect.x, Camera.main.rect.height - Camera.main.rect.y, 0f));
+        Vector3 maxLocalPos = transform.InverseTransformPoint(maxWorldPos);
+        HexCoordinates maxCoordinates = HexCoordinates.FromPosition(maxLocalPos);
+        width = maxCoordinates.X;
+        height = maxCoordinates.Y - 1; //Remove 1 to keep one extra line for the score display.
+
+        cells = new HexCell[width, height];
 
 		for (int y = 0; y < height; ++y) {
 			for (int x = 0; x < width; ++x) {
@@ -159,8 +171,8 @@ public class HexGrid : MonoBehaviour {
         bool isInRange = 
             x >= 0 && x < width &&
             y >= 0 && y < height;
-        Assert.IsFalse(shouldRaiseExceptions == true && isInRange == false, 
-            ObjectNames.GetClassName(this) + "::" + MethodBase.GetCurrentMethod().Name + "(" + 
+        Assert.IsFalse(shouldRaiseExceptions == true && isInRange == false,
+            GetType() + "::" + MethodBase.GetCurrentMethod().Name + "(" + 
             x.ToString() + ", " + y.ToString() + 
             ") is outside of the range (" + 
             width.ToString() + ", " + height.ToString() + ")");
