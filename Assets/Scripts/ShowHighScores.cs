@@ -7,9 +7,6 @@ using UnityEngine.UI;
 
 public class ShowHighScores : MonoBehaviour
 {
-
-    
-    // Use this for initialization
     void Start()
     {
         DisplayScores();
@@ -18,7 +15,6 @@ public class ShowHighScores : MonoBehaviour
     private void DisplayScores()
     {
         Text txt = GameObject.Find("HighScores").GetComponent<Text>();
-
 
         if (Globals.GameScore != 0)
             txt.text = "Your score: " + Globals.GameScore + "\n";
@@ -43,5 +39,11 @@ public class ShowHighScores : MonoBehaviour
         manager = new ScoreManager();
     }
 
-   
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            GoToMainScene();
+        }
+    }
 }
