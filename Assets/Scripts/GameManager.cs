@@ -78,49 +78,49 @@ public class GameManager : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Escape))
             SceneManager.LoadScene("MainScene");
+    }
 
-        if (Input.GetButtonDown("Fire1"))
+    public void FireBubbleFromPosition(Vector3 inputPosition)
+    {
+        Ray inputRay = Camera.main.ScreenPointToRay(inputPosition);
+        if (Physics.Raycast(inputRay, out hit))
         {
-            Ray inputRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(inputRay, out hit))
+            Vector3 position = GameBoard.transform.InverseTransformPoint(hit.point);
+            HexCoordinates coordinates = HexCoordinates.FromPosition(position);
+            if (GameBoard.HasCellBubble(coordinates.X, coordinates.Y) == false)
             {
-                Vector3 position = GameBoard.transform.InverseTransformPoint(hit.point);
-                HexCoordinates coordinates = HexCoordinates.FromPosition(position);
-                if (GameBoard.HasCellBubble(coordinates.X, coordinates.Y) == false)
+                GameBoard.AddBubbleToCoordinates(coordinates.X, coordinates.Y);
+                var clusterBubbles = GameBoard.GetClusterFromCoordinates(coordinates.X, coordinates.Y);
+
+                if (clusterBubbles != null &&
+                    clusterBubbles.Count >= MinBubblesToRemove)
                 {
-                    GameBoard.AddBubbleToCoordinates(coordinates.X, coordinates.Y);
-                    var clusterBubbles = GameBoard.GetClusterFromCoordinates(coordinates.X, coordinates.Y);
-
-                    if (clusterBubbles != null &&
-                        clusterBubbles.Count >= MinBubblesToRemove)
+                    foreach (var bubbleCoordinates in clusterBubbles)
                     {
-                        foreach (var bubbleCoordinates in clusterBubbles)
-                        {
-                            GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
-                        }
-
-                        var floatingClusters = GameBoard.GetFloatingClusters();
-
-                        foreach (var bubbleCoordinates in floatingClusters)
-                        {
-                            GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
-                        }
-
-                        UpdateScore(clusterBubbles.Count + floatingClusters.Count);
+                        GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
                     }
 
-                    GameBoard.SetTurnOver();
-                    if (GameBoard.IsTurnEventCountReached() == true)
+                    var floatingClusters = GameBoard.GetFloatingClusters();
+
+                    foreach (var bubbleCoordinates in floatingClusters)
                     {
-                        GameBoard.AddNewBubblesRow();
+                        GameBoard.RemoveBubbleFromCoordinates(bubbleCoordinates.X, bubbleCoordinates.Y);
                     }
+
+                    UpdateScore(clusterBubbles.Count + floatingClusters.Count);
+                }
+
+                GameBoard.SetTurnOver();
+                if (GameBoard.IsTurnEventCountReached() == true)
+                {
+                    GameBoard.AddNewBubblesRow();
                 }
             }
-
-            IsGameOver = CheckIsGameOver();
-            if (IsGameOver)
-                StartCoroutine(GotoGameOver());
         }
+
+        IsGameOver = CheckIsGameOver();
+        if (IsGameOver)
+            StartCoroutine(GotoGameOver());
     }
 
     private IEnumerator GotoGameOver()
