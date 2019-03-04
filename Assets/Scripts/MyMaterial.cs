@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Assets.Scripts
 {
@@ -11,7 +7,6 @@ namespace Assets.Scripts
     /// </summary>
     class MyMaterial : Material
     {
-        
         public string ColorName { get; set; }
 
         public MyMaterial(Material baseMaterial)
@@ -23,6 +18,15 @@ namespace Assets.Scripts
         {
             ColorName = colorName;
         }
+        
+        private static MyMaterial[] cachedMaterials =
+        {
+            new MyMaterial(Resources.Load("Materials/redMaterial") as Material, "red"),
+            new MyMaterial(Resources.Load("Materials/greenMaterial") as Material, "green"),
+            new MyMaterial(Resources.Load("Materials/blueMaterial") as Material, "blue"),
+            new MyMaterial(Resources.Load("Materials/yellowMaterial") as Material, "yellow"),
+            new MyMaterial(Resources.Load("Materials/purpleMaterial") as Material, "purple")
+        };
 
         /// <summary>
         /// helper method to get a random color
@@ -30,19 +34,8 @@ namespace Assets.Scripts
         /// <returns></returns>
         public static MyMaterial GetRandomMaterial()
         {
-            int x = UnityEngine.Random.Range(0, 5);
-            if (x == 0)
-                return new MyMaterial(Resources.Load("Materials/redMaterial") as Material, "red");
-            else if (x == 1)
-                return new MyMaterial(Resources.Load("Materials/greenMaterial") as Material, "green");
-            else if (x == 2)
-                return new MyMaterial(Resources.Load("Materials/blueMaterial") as Material, "blue");
-            else if (x == 3)
-                return new MyMaterial(Resources.Load("Materials/yellowMaterial") as Material, "yellow");
-            else if (x == 4)
-                return new MyMaterial(Resources.Load("Materials/purpleMaterial") as Material, "purple");
-            else
-                return new MyMaterial(Resources.Load("Materials/redMaterial") as Material, "red");
+            int index = Random.Range(0, cachedMaterials.Length);
+            return cachedMaterials[index];
         }
     }
 }
