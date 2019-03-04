@@ -74,7 +74,7 @@ public class HexGrid : MonoBehaviour {
         Vector3 worldPos = Camera.main.ScreenToWorldPoint(-Camera.main.transform.localPosition);
         Vector3 outerRadius = new Vector3(HexMetrics.outerRadius, HexMetrics.outerRadius, 0f);
         transform.localScale = transform.localScale * Camera.main.aspect / (200f / 300f);
-        transform.position = worldPos + (Vector3.Scale(outerRadius, transform.localScale));
+        transform.position = worldPos + Vector3.Scale(outerRadius, transform.lossyScale);
 
         //Adapt the grid size to fit the screen.
         Vector3 maxWorldPos = Camera.main.ViewportToWorldPoint(new Vector3(Camera.main.rect.width - Camera.main.rect.x, Camera.main.rect.height - Camera.main.rect.y, 0f));
