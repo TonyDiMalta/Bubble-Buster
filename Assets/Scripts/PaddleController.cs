@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -10,6 +8,7 @@ public class PaddleController : MonoBehaviour {
     private float leftLimitX = 0;
     private float rightLimitX = Screen.width;
     private float paddleUpperY = 0;
+    private float worldZPos = 0;
     private bool isPaddleSelected = false;
     private int paddleFingerId = -1;
     private bool isReadyToFire = false;
@@ -32,7 +31,8 @@ public class PaddleController : MonoBehaviour {
         leftLimitX = (rectTransform.width / 2f) * transform.lossyScale.x;
         rightLimitX = Screen.width - leftLimitX;
         paddleUpperY = transform.position.y + rectTransform.height * transform.lossyScale.y;
-        
+        worldZPos = -Camera.main.transform.position.z;
+
         if (lineRenderer != null)
         {
             lineRenderer.startWidth = 0.025f;
@@ -60,7 +60,6 @@ public class PaddleController : MonoBehaviour {
                     isReadyToFire == false &&
                     touch.position.y > paddleUpperY)
                 {
-                    Debug.Log("Ready to fire a bubble");
                     isReadyToFire = true;
                     fireFingerId = touch.fingerId;
                     lineRenderer.enabled = true;
@@ -76,7 +75,6 @@ public class PaddleController : MonoBehaviour {
                 else if (touch.phase == TouchPhase.Ended ||
                     touch.phase == TouchPhase.Canceled)
                 {
-                    Debug.Log("Paddle released");
                     isPaddleSelected = false;
                     paddleFingerId = -1;
                 }
@@ -96,12 +94,22 @@ public class PaddleController : MonoBehaviour {
 
                     if (touch.phase == TouchPhase.Ended)
                     {
-                        Debug.Log("Fire bubble");
-                        gameManager.FireBubbleFromPosition(touch.position);
+                        Vector3 originPosition = new Vector3(transform.position.x, paddleUpperY, worldZPos);
+                        Vector3 destPosition = new Vector3(touch.position.x, touch.position.y, worldZPos);
+                        gameManager.FireBubbleTowardsPosition(originPosition, destPosition);
                     }
                 }
             }
         }
+
+#if UNITY_EDITOR
+        if (Input.GetMouseButtonUp(0))
+        {
+            Vector3 originPosition = new Vector3(transform.position.x, paddleUpperY, worldZPos);
+            Vector3 destPosition = new Vector3(Input.mousePosition.x, Input.mousePosition.y, worldZPos);
+            gameManager.FireBubbleTowardsPosition(originPosition, destPosition);
+        }
+#endif
     }
 
     private bool TryToSelectPaddleFromPosition(Vector3 inputPosition)
@@ -121,7 +129,6 @@ public class PaddleController : MonoBehaviour {
         {
             if (result.gameObject.CompareTag("Player") == true)
             {
-                Debug.Log("Paddle selected");
                 isPaddleSelected = true;
                 return true;
             }
@@ -158,7 +165,7 @@ public class PaddleController : MonoBehaviour {
 
         if (inputPosition.y > paddleUpperY)
         {
-            Vector3 destWorldPos = Camera.main.ScreenToWorldPoint(new Vector3(inputPosition.x, inputPosition.y, -Camera.main.transform.position.z));
+            Vector3 destWorldPos = Camera.main.ScreenToWorldPoint(new Vector3(inputPosition.x, inputPosition.y, worldZPos));
             lineRenderer.SetPosition(1, destWorldPos);
         }
     }

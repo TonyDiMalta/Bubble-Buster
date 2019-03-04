@@ -2,17 +2,22 @@
 
 namespace Assets.Scripts
 {
-    //every bubble in our game
-    public class Bubble
+    /// <summary>
+    /// A class that each bubble in the game uses
+    /// </summary>
+    public class Bubble : MonoBehaviour
     {
-        public Material BubbleMaterial { get; set; } //current color
-        public Material OriginalBubbleMaterial { get; private set; } //cache the original color
-        public GameObject GameObject;
+        public MyMaterial material; //current color
+        public bool isOnBoard = false;
 
-        public Bubble(GameObject gameObject, Material material)
+        void OnCollisionEnter(Collision collision)
         {
-            GameObject = gameObject;
-            OriginalBubbleMaterial = BubbleMaterial = material;
+            if (isOnBoard == false &&
+                collision.gameObject.tag == "Bubble")
+            {
+                var gameManager = GameObject.FindGameObjectWithTag("GameController");
+                gameManager.GetComponent<GameManager>().AddBubbleToGameBoard(this);
+            }
         }
     }
 }

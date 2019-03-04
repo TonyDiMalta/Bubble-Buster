@@ -4,12 +4,8 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - red
-  - green
-  - blue
-  - yellow
-  - purple
   - GameBoard
+  - Bubble
   layers:
   - Default
   - TransparentFX

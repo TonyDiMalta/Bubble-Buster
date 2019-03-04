@@ -92,18 +92,27 @@ public class HexGrid : MonoBehaviour {
 		}
 	}
 
-	void Start () {
-		hexMesh.Triangulate(cells);
+	void Start ()
+    {
+        if (Debug.isDebugBuild)
+        {
+            hexMesh.Triangulate(cells);
+        }
 	}
 
-	public void ColorCell (Vector3 position, Color color) {
+	public void ColorCell (Vector3 position, Color color)
+    {
 		position = transform.InverseTransformPoint(position);
 		HexCoordinates coordinates = HexCoordinates.FromPosition(position);
         if (AreCoordinatesInRange(coordinates.X, coordinates.Y) == true)
         {
             HexCell cell = cells[coordinates.X, coordinates.Y];
             cell.color = color;
-            hexMesh.Triangulate(cells);
+
+            if (Debug.isDebugBuild)
+            {
+                hexMesh.Triangulate(cells);
+            }
         }
 	}
 
@@ -127,11 +136,14 @@ public class HexGrid : MonoBehaviour {
             cell.bubble = null;
         }
 
-		Text label = Instantiate<Text>(cellLabelPrefab);
-		label.rectTransform.SetParent(gridCanvas.transform, false);
-		label.rectTransform.anchoredPosition =
-			new Vector2(position.x, position.y);
-		label.text = cell.coordinates.ToStringOnSeparateLines();
+        if (Debug.isDebugBuild)
+        {
+            Text label = Instantiate<Text>(cellLabelPrefab);
+            label.rectTransform.SetParent(gridCanvas.transform, false);
+            label.rectTransform.anchoredPosition =
+                new Vector2(position.x, position.y);
+            label.text = cell.coordinates.ToStringOnSeparateLines();
+        }
     }
 
     void CreateBubble(HexCell cell)
@@ -142,18 +154,41 @@ public class HexGrid : MonoBehaviour {
         MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
         var renderer = go.transform.GetComponent<Renderer>();
         renderer.material = material; //set the color
-        go.tag = material.ColorName;
-        go.name = "Bubble(" + go.tag + ")";
+        go.name = go.tag + "(" + material.colorName + ")";
 
-        cell.bubble = new Bubble(go, material); //add the new bubble to the cell
+        var bubble = go.GetComponent<Bubble>();
+        bubble.material = material;
+        bubble.isOnBoard = true;
+        cell.bubble = bubble; //add the new bubble to the cell
     }
 
-    public void AddBubbleToCoordinates(int x, int y)
+    public Bubble CreateBubble(Transform parent, MyMaterial material)
+    {
+        GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
+        go.transform.SetParent(parent, false); //attach the bubble to the parent
+        
+        var renderer = go.transform.GetComponent<Renderer>();
+        renderer.material = material; //set the color
+        go.name = go.tag + "(" + material.colorName + ")";
+
+        var bubble = go.GetComponent<Bubble>();
+        bubble.material = material;
+        bubble.isOnBoard = false;
+        return bubble; //return the new bubble
+    }
+
+    public void AddBubbleToCoordinates(int x, int y, Bubble bubble)
     {
         if (AreCoordinatesInRange(x, y) == true &&
             cells[x, y].bubble == null)
         {
-            CreateBubble(cells[x, y]);
+            cells[x, y].bubble = bubble;
+            bubble.isOnBoard = true;
+            Transform bubbleTransform = bubble.transform;
+            bubbleTransform.SetParent(cells[x, y].transform, false);
+            Rigidbody rb = bubble.GetComponent<Rigidbody>();
+            rb.constraints = RigidbodyConstraints.FreezeAll;
+            bubbleTransform.localPosition = new Vector3(0f, 0f, 1f);
         }
     }
 
@@ -161,7 +196,7 @@ public class HexGrid : MonoBehaviour {
     {
         if (AreCoordinatesInRange(x, y) == true)
         {
-            Destroy(cells[x, y].bubble.GameObject, 0f);
+            Destroy(cells[x, y].bubble.gameObject, 0f);
             cells[x, y].bubble = null;
         }
     }
@@ -227,7 +262,7 @@ public class HexGrid : MonoBehaviour {
         return neighbors;
     }
 
-    public List<HexCoordinates> GetClusterFromCoordinates(int x, int y, bool shouldIgnoreTag = false)
+    public List<HexCoordinates> GetClusterFromCoordinates(int x, int y, bool shouldIgnoreColor = false)
     {
         if (AreCoordinatesInRange(x, y) == false)
         {
@@ -241,7 +276,7 @@ public class HexGrid : MonoBehaviour {
             return null;
         }
 
-        string originalTag = originalCell.bubble.GameObject.tag;
+        string originalColor = originalCell.bubble.material.colorName;
         
         var cellsToProcess = new Stack<HexCell>();
         cellsToProcess.Push(originalCell);
@@ -258,8 +293,8 @@ public class HexGrid : MonoBehaviour {
                 continue;
             }
             
-            if (shouldIgnoreTag == true ||
-                currentCell.bubble.GameObject.CompareTag(originalTag) == true)
+            if (shouldIgnoreColor == true ||
+                currentCell.bubble.material.colorName == originalColor)
             {
                 clusterCells.Add(currentCoordinates);
                 var neighbors = GetBubbleNeighbors(currentCoordinates.X, currentCoordinates.Y);
@@ -328,7 +363,7 @@ public class HexGrid : MonoBehaviour {
 
                 if (bubbleToMove != null)
                 {
-                    var bubbleToMoveTransform = bubbleToMove.GameObject.transform;
+                    var bubbleToMoveTransform = bubbleToMove.gameObject.transform;
                     var currentCellTransform = cells[x, y].transform;
                     bubbleToMoveTransform.SetParent(currentCellTransform, false);
                     cells[x, y].bubble = bubbleToMove;

@@ -5,18 +5,14 @@ namespace Assets.Scripts
     /// <summary>
     /// A helper class to cache our color name along with the current material
     /// </summary>
-    class MyMaterial : Material
+    public class MyMaterial : Material
     {
-        public string ColorName { get; set; }
-
-        public MyMaterial(Material baseMaterial)
-            : base(baseMaterial)
-        { }
-
+        public string colorName { get; private set; }
+        
         public MyMaterial(Material baseMaterial, string colorName)
             : base(baseMaterial)
         {
-            ColorName = colorName;
+            this.colorName = colorName;
         }
         
         private static MyMaterial[] cachedMaterials =
