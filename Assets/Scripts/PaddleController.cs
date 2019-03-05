@@ -170,4 +170,15 @@ public class PaddleController : MonoBehaviour {
             lineRenderer.SetPosition(1, destWorldPos);
         }
     }
+
+    public void SetLineRendererColor(Color color)
+    {
+        if (lineRenderer == null)
+        {
+            return;
+        }
+
+        lineRenderer.startColor = color;
+        lineRenderer.endColor = color;
+    }
 }

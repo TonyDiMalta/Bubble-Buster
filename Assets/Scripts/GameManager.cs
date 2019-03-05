@@ -30,10 +30,13 @@ public class GameManager : MonoBehaviour
     private float BubbleSpeed = 10f;
 
     private HexGrid GameBoard;
+    private PaddleController Paddle;
     
     void Start()
     {
         bubbleMaterial = MyMaterial.GetRandomMaterial();
+        Paddle = GameObject.FindGameObjectWithTag("Player").GetComponent<PaddleController>();
+        Paddle.SetLineRendererColor(bubbleMaterial.color);
         GameBoard = GameObject.FindGameObjectWithTag("GameBoard").GetComponent<HexGrid>();
     }
     
@@ -115,6 +118,7 @@ public class GameManager : MonoBehaviour
             StartCoroutine(GotoGameOver());
 
         bubbleMaterial = MyMaterial.GetRandomMaterial();
+        Paddle.SetLineRendererColor(bubbleMaterial.color);
         bubbleToLaunch = null;
     }
 
