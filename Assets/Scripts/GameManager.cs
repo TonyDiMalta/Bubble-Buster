@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        bubbleToLaunch = GameBoard.CreateBubble(transform, bubbleMaterial);
+        bubbleToLaunch = GameBoard.CreateBubble(bubbleMaterial);
 
         Vector3 startWorldPos = Camera.main.ScreenToWorldPoint(startPosition);
         startWorldPos.y += bubbleToLaunch.GetComponent<Renderer>().bounds.size.y * bubbleToLaunch.transform.lossyScale.y;

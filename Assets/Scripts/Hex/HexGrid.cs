@@ -1,5 +1,4 @@
 ﻿using Assets.Scripts;
-using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -163,11 +162,11 @@ public class HexGrid : MonoBehaviour {
         cell.bubble = bubble; //add the new bubble to the cell
     }
 
-    public GameObject CreateBubble(Transform parent, MyMaterial material)
+    public GameObject CreateBubble(MyMaterial material)
     {
         GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
-        go.transform.SetParent(parent, false); //attach the bubble to the parent
-        
+        go.transform.SetParent(transform, false); //attach the bubble to the parent
+
         var renderer = go.GetComponent<Renderer>();
         renderer.material = material; //set the color
         go.name = go.tag + "(" + material.colorName + ")";
