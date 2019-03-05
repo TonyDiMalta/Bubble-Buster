@@ -62,6 +62,7 @@ public class PaddleController : MonoBehaviour {
                 {
                     isReadyToFire = true;
                     fireFingerId = touch.fingerId;
+                    UpdateLineRenderer(touch.position);
                     lineRenderer.enabled = true;
                 }
             }
