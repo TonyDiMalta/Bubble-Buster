@@ -8,10 +8,9 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public Text DisplayedScore;
-    public GameObject Explosion;
     public GameObject BubblePrefab;
     
-    private Bubble bubbleToLaunch;
+    private GameObject bubbleToLaunch;
     public MyMaterial bubbleMaterial { get; private set; }
     private Vector2 bubbleDirection;
     
@@ -34,7 +33,6 @@ public class GameManager : MonoBehaviour
     
     void Start()
     {
-        IsGameOver = false;
         bubbleMaterial = MyMaterial.GetRandomMaterial();
         GameBoard = GameObject.FindGameObjectWithTag("GameBoard").GetComponent<HexGrid>();
     }

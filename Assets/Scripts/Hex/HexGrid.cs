@@ -1,4 +1,5 @@
 ﻿using Assets.Scripts;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
@@ -66,7 +67,8 @@ public class HexGrid : MonoBehaviour {
         new HexCoordinates(1, -1)
     };
 
-    void Awake () {
+    void Start()
+    {
 		gridCanvas = GetComponentInChildren<Canvas>();
 		hexMesh = GetComponentInChildren<HexMesh>();
 
@@ -85,22 +87,21 @@ public class HexGrid : MonoBehaviour {
 
         cells = new HexCell[width, height];
 
-		for (int y = 0; y < height; ++y) {
-			for (int x = 0; x < width; ++x) {
-				CreateCell(x, y);
-			}
-		}
-	}
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                CreateCell(x, y);
+            }
+        }
 
-	void Start ()
-    {
         if (Debug.isDebugBuild)
         {
             hexMesh.Triangulate(cells);
         }
 	}
 
-	public void ColorCell (Vector3 position, Color color)
+	public void ColorCell(Vector3 position, Color color)
     {
 		position = transform.InverseTransformPoint(position);
 		HexCoordinates coordinates = HexCoordinates.FromPosition(position);
@@ -116,11 +117,11 @@ public class HexGrid : MonoBehaviour {
         }
 	}
 
-	void CreateCell (int x, int y)
+	void CreateCell(int x, int y)
     {
 		Vector3 position = HexCoordinates.PositionFromOffsetCoordinates(x, y);
 
-        HexCell cell = cells[x, y] = Instantiate<HexCell>(cellPrefab);
+        HexCell cell = cells[x, y] = Instantiate(cellPrefab);
         cell.name = "Cell[" + x.ToString() + ", " + y.ToString() + "]";
         cell.transform.SetParent(transform, false);
 		cell.transform.localPosition = position;
@@ -152,7 +153,7 @@ public class HexGrid : MonoBehaviour {
         go.transform.SetParent(cell.transform, false); //attach the bubble to the cell
 
         MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
-        var renderer = go.transform.GetComponent<Renderer>();
+        var renderer = go.GetComponent<Renderer>();
         renderer.material = material; //set the color
         go.name = go.tag + "(" + material.colorName + ")";
 
@@ -162,19 +163,19 @@ public class HexGrid : MonoBehaviour {
         cell.bubble = bubble; //add the new bubble to the cell
     }
 
-    public Bubble CreateBubble(Transform parent, MyMaterial material)
+    public GameObject CreateBubble(Transform parent, MyMaterial material)
     {
         GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
         go.transform.SetParent(parent, false); //attach the bubble to the parent
         
-        var renderer = go.transform.GetComponent<Renderer>();
+        var renderer = go.GetComponent<Renderer>();
         renderer.material = material; //set the color
         go.name = go.tag + "(" + material.colorName + ")";
 
         var bubble = go.GetComponent<Bubble>();
         bubble.material = material;
         bubble.isOnBoard = false;
-        return bubble; //return the new bubble
+        return go; //return the bubble gameobject
     }
 
     public void AddBubbleToCoordinates(int x, int y, Bubble bubble)
