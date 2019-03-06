@@ -39,7 +39,7 @@ public class HexGrid : MonoBehaviour {
 
 	public HexCell cellPrefab;
 	public Text cellLabelPrefab;
-    public GameObject bubblePrefab;
+    public GameObject[] bubblePrefabs;
 
     HexCell[,] cells;
 
@@ -148,33 +148,50 @@ public class HexGrid : MonoBehaviour {
 
     void CreateBubble(HexCell cell)
     {
-        GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
+        int bubbleIndex = Random.Range(0, bubblePrefabs.Length);
+        GameObject go = Instantiate(bubblePrefabs[bubbleIndex], new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
         go.transform.SetParent(cell.transform, false); //attach the bubble to the cell
-
-        MyMaterial material = MyMaterial.GetRandomMaterial(); //get a random color
-        var renderer = go.GetComponent<Renderer>();
-        renderer.material = material; //set the color
-        go.name = go.tag + "(" + material.colorName + ")";
+        go.name = bubblePrefabs[bubbleIndex].name;
 
         var bubble = go.GetComponent<Bubble>();
-        bubble.material = material;
+        var renderer = go.GetComponent<Renderer>();
+        bubble.colorName = renderer.material.color.ToString(); //set the color name
         bubble.isOnBoard = true;
         cell.bubble = bubble; //add the new bubble to the cell
     }
 
-    public GameObject CreateBubble(MyMaterial material)
+    public GameObject CreateBubble(int bubbleIndex)
     {
-        GameObject go = Instantiate(bubblePrefab, new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
+        GameObject go = Instantiate(bubblePrefabs[bubbleIndex], new Vector3(0f, 0f, 1f), Quaternion.identity); //create a bubble
         go.transform.SetParent(transform, false); //attach the bubble to the parent
-
-        var renderer = go.GetComponent<Renderer>();
-        renderer.material = material; //set the color
-        go.name = go.tag + "(" + material.colorName + ")";
+        go.name = bubblePrefabs[bubbleIndex].name;
 
         var bubble = go.GetComponent<Bubble>();
-        bubble.material = material;
+        var renderer = go.GetComponent<Renderer>();
+        bubble.colorName = renderer.material.color.ToString(); //set the color name
         bubble.isOnBoard = false;
         return go; //return the bubble gameobject
+    }
+
+    public Color GetBubbleColor(int bubbleIndex)
+    {
+        bool isInRange = bubblePrefabs.Length > bubbleIndex;
+        if (isInRange == false)
+        {
+            Assert.IsTrue(true,
+                "HexGrid::" + MethodBase.GetCurrentMethod().Name +
+                "(" + bubbleIndex.ToString() + ") " +
+                ") is outside of the range (0 ," + bubblePrefabs.Length.ToString() + ")");
+            bubbleIndex = 0;
+        }
+
+        var renderer = bubblePrefabs[bubbleIndex].GetComponent<Renderer>();
+        return renderer.sharedMaterial.color;
+    }
+
+    public int GetRandomBubbleIndex()
+    {
+        return Random.Range(0, bubblePrefabs.Length);
     }
 
     public void AddBubbleToCoordinates(int x, int y, Bubble bubble)
@@ -276,7 +293,7 @@ public class HexGrid : MonoBehaviour {
             return null;
         }
 
-        string originalColor = originalCell.bubble.material.colorName;
+        string originalColor = originalCell.bubble.colorName;
         
         var cellsToProcess = new Stack<HexCell>();
         cellsToProcess.Push(originalCell);
@@ -294,7 +311,7 @@ public class HexGrid : MonoBehaviour {
             }
             
             if (shouldIgnoreColor == true ||
-                currentCell.bubble.material.colorName == originalColor)
+                currentCell.bubble.colorName == originalColor)
             {
                 clusterCells.Add(currentCoordinates);
                 var neighbors = GetBubbleNeighbors(currentCoordinates.X, currentCoordinates.Y);

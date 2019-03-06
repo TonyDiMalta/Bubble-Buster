@@ -7,7 +7,7 @@ namespace Assets.Scripts
     /// </summary>
     public class Bubble : MonoBehaviour
     {
-        public MyMaterial material; //current color
+        public string colorName;
         public bool isOnBoard = false;
 
         void OnCollisionEnter(Collision collision)

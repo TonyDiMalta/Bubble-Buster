@@ -8,10 +8,9 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public Text DisplayedScore;
-    public GameObject BubblePrefab;
     
     private GameObject bubbleToLaunch;
-    public MyMaterial bubbleMaterial { get; private set; }
+    private int bubbleIndex;
     private Vector2 bubbleDirection;
     
     private bool IsGameOver = false;
@@ -34,10 +33,11 @@ public class GameManager : MonoBehaviour
     
     void Start()
     {
-        bubbleMaterial = MyMaterial.GetRandomMaterial();
-        Paddle = GameObject.FindGameObjectWithTag("Player").GetComponent<PaddleController>();
-        Paddle.SetLineRendererColor(bubbleMaterial.color);
         GameBoard = GameObject.FindGameObjectWithTag("GameBoard").GetComponent<HexGrid>();
+        bubbleIndex = GameBoard.GetRandomBubbleIndex();
+        Color bubbleColor = GameBoard.GetBubbleColor(bubbleIndex);
+        Paddle = GameObject.FindGameObjectWithTag("Player").GetComponent<PaddleController>();
+        Paddle.SetLineRendererColor(bubbleColor);
     }
     
     void Update()
@@ -64,7 +64,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        bubbleToLaunch = GameBoard.CreateBubble(bubbleMaterial);
+        bubbleToLaunch = GameBoard.CreateBubble(bubbleIndex);
 
         Vector3 startWorldPos = Camera.main.ScreenToWorldPoint(startPosition);
         startWorldPos.y += bubbleToLaunch.GetComponent<Renderer>().bounds.size.y * bubbleToLaunch.transform.lossyScale.y;
@@ -117,8 +117,9 @@ public class GameManager : MonoBehaviour
         if (IsGameOver)
             StartCoroutine(GotoGameOver());
 
-        bubbleMaterial = MyMaterial.GetRandomMaterial();
-        Paddle.SetLineRendererColor(bubbleMaterial.color);
+        bubbleIndex = GameBoard.GetRandomBubbleIndex();
+        Color bubbleColor = GameBoard.GetBubbleColor(bubbleIndex);
+        Paddle.SetLineRendererColor(bubbleColor);
         bubbleToLaunch = null;
     }
 
